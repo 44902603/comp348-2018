@@ -1,7 +1,10 @@
 import nltk
+import collections
 nltk.download('punkt')
 nltk.download('gutenberg')
 nltk.download('brown')
+nltk.download('averaged_perceptron_tagger')
+nltk.download('universal_tagset')
 
 # Task 1 (1 mark)
 def word_counts(text, words):
@@ -12,7 +15,13 @@ def word_counts(text, words):
     >>> word_counts(emma, ['the', 'a'])
     [4842, 3001]
     """
-    return []
+    result = []
+    sent = nltk.word_tokenize(text)
+    count = collections.Counter(sent)
+    for word in words:
+        result.append(count[word])
+
+    return result
 
 # Task 2 (1 mark)
 def pos_counts(text, pos_list):
@@ -21,7 +30,17 @@ def pos_counts(text, pos_list):
     >>> pos_counts(emma, ['DET', 'NOUN'])
     [14352, 32029]
     """
-    return []
+    sents = [nltk.word_tokenize(sent) for sent in nltk.sent_tokenize(text)]
+    tag_sents = nltk.pos_tag_sents(sents, tagset='universal')
+    pos = []
+    for s in tag_sents:
+        for w in s:
+            pos.append(w[1])
+    counter = collections.Counter(pos)
+    result = []
+    for pos in pos_list:
+        result.append(counter[pos])
+    return result
 
 # Task 3 (1 mark)
 import re
@@ -35,7 +54,22 @@ def compute_fres(text):
     >>> compute_fres(emma) # doctest: +ELLIPSIS
     99.40...
     """
-    return 0.0
+    total_sents = len(nltk.sent_tokenize(text))
+
+    words = []
+    for s in nltk.sent_tokenize(text):
+        for w in nltk.word_tokenize(s):
+            words.append(w)
+
+    total_words = len(words)
+
+    total_syllables = 0
+    for word in words:
+        total_syllables = total_syllables + count_syllables(word)
+
+    fres = 206.835 - (1.015 * (total_words / total_sents)) - (84.6 * (total_syllables / total_words))
+
+    return fres
 
 # Task 4 (2 marks)
 import re
@@ -45,6 +79,8 @@ def annotateOD(listoftokens):
     >>> annotateOD("the second tooth".split())
     [('the', ''), ('second', 'OD'), ('tooth', '')]
     """
+    regexp = re.compile('(^[\d]*(1st|nd|rd|th)$)|((\w|-)*?(irst|econd|hird|ourth|ifth|ixth|ighth|inth|enth|tieth)$)')
+    
     result = []
     for t in listoftokens:
         if regexp.match(t):
